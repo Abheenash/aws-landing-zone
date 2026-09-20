@@ -1,5 +1,7 @@
 # aws-landing-zone
 
+> **Sep 2026:** first release — Organizations + OU tree, five SCPs unit-tested against concrete requests, OIDC deploy roles with permissions boundaries, org CloudTrail; validated, deliberately not applied.
+
 A multi-account AWS foundation in Terraform — **Organizations, an OU tree, service control
 policies as guardrails, per-account baselines, keyless GitHub OIDC deploy roles scoped to
 named repos, budgets, and an organization CloudTrail with a root-usage alarm** — with every
