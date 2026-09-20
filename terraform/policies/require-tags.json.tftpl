@@ -1,0 +1,36 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+%{ for tag in required_tags ~}
+    {
+      "Sid": "Require${tag}TagOnCreate",
+      "Effect": "Deny",
+      "Action": [
+        "ec2:RunInstances",
+        "ec2:CreateVolume",
+        "rds:CreateDBInstance",
+        "rds:CreateDBCluster",
+        "lambda:CreateFunction",
+        "dynamodb:CreateTable",
+        "ecs:CreateCluster",
+        "eks:CreateCluster",
+        "elasticloadbalancing:CreateLoadBalancer"
+      ],
+      "Resource": "*",
+      "Condition": {
+        "Null": { "aws:RequestTag/${tag}": "true" }
+      }
+    },
+    {
+      "Sid": "Require${tag}TagOnBucket",
+      "Effect": "Deny",
+      "Action": [ "s3:CreateBucket" ],
+      "Resource": "*",
+      "Condition": {
+        "Null": { "aws:RequestTag/${tag}": "true" },
+        "ArnNotLike": { "aws:PrincipalArn": "arn:aws:iam::*:role/OrganizationAccountAccessRole" }
+      }
+    }%{ if tag != required_tags[length(required_tags) - 1] },%{ endif }
+%{ endfor ~}
+  ]
+}

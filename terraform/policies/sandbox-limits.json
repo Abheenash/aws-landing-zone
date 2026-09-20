@@ -1,0 +1,46 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "DenyExpensiveServices",
+      "Effect": "Deny",
+      "Action": [
+        "rds:*",
+        "eks:*",
+        "redshift:*",
+        "elasticache:*",
+        "opensearch:*",
+        "es:*",
+        "sagemaker:*",
+        "ec2:CreateNatGateway",
+        "directconnect:*",
+        "ec2:PurchaseReservedInstancesOffering",
+        "ec2:PurchaseHostReservation",
+        "savingsplans:*",
+        "route53domains:RegisterDomain",
+        "route53domains:TransferDomain"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "DenyLargeInstances",
+      "Effect": "Deny",
+      "Action": [ "ec2:RunInstances" ],
+      "Resource": "arn:aws:ec2:*:*:instance/*",
+      "Condition": {
+        "ForAnyValue:StringNotLike": {
+          "ec2:InstanceType": [ "t3.nano", "t3.micro", "t3.small", "t3.medium", "t4g.nano", "t4g.micro", "t4g.small", "t4g.medium" ]
+        }
+      }
+    },
+    {
+      "Sid": "DenyLargeVolumes",
+      "Effect": "Deny",
+      "Action": [ "ec2:CreateVolume", "ec2:RunInstances" ],
+      "Resource": "arn:aws:ec2:*:*:volume/*",
+      "Condition": {
+        "NumericGreaterThan": { "ec2:VolumeSize": "50" }
+      }
+    }
+  ]
+}

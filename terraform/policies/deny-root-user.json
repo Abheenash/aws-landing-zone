@@ -1,0 +1,29 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "DenyRootUser",
+      "Effect": "Deny",
+      "NotAction": [
+        "aws-portal:*",
+        "billing:*",
+        "account:*",
+        "support:*",
+        "organizations:LeaveOrganization"
+      ],
+      "Resource": "*",
+      "Condition": {
+        "StringLike": { "aws:PrincipalArn": "arn:aws:iam::*:root" }
+      }
+    },
+    {
+      "Sid": "DenyRootAccessKeys",
+      "Effect": "Deny",
+      "Action": [
+        "iam:CreateAccessKey",
+        "iam:UpdateAccessKey"
+      ],
+      "Resource": "arn:aws:iam::*:root"
+    }
+  ]
+}

@@ -1,0 +1,4 @@
+org_root_email_domain = "example.com"      # aws+dev@example.com, aws+prod@… must be real, unique mailboxes
+budget_email          = "you@example.com"
+home_regions          = ["us-east-1", "us-west-2"]
+budget_usd            = 20

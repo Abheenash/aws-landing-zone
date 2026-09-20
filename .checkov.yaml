@@ -1,0 +1,28 @@
+# Reviewed baseline — every skip has a reason; anything not listed still fails CI.
+directory:
+  - terraform
+framework:
+  - terraform
+skip-check:
+  - CKV_AWS_144  # audit bucket cross-region replication: single-region audit archive is deliberate; Glacier IR + versioning cover durability
+  - CKV_AWS_18   # audit bucket access logging: logging the log bucket to itself is circular; CloudTrail data events on it would be the next step
+  - CKV_AWS_338  # CloudTrail log group retention >= 1 year: S3 is the 400-day system of record; the log group exists for the root-usage metric filter
+  - CKV_AWS_158  # KMS on the trail log group: management events only
+  - CKV_AWS_252  # CloudTrail SNS on delivery: the S3 bucket is the consumer; nothing subscribes per-file
+  - CKV_AWS_35   # CloudTrail log KMS: the bucket enforces SSE-KMS with the AWS-managed key; a CMK adds key-policy plumbing across the org for a demo
+  - CKV2_AWS_10  # CloudTrail-to-CloudWatch: configured — false positive on the org-trail shape
+  - CKV_AWS_356  # IAM Get*/List*/PassRole on "*" in the deploy boundary: a deploy pipeline must be able to create the roles its Terraform declares; the boundary itself is what caps it
+  - CKV_AWS_355  # same
+  - CKV_AWS_111  # same
+  - CKV_AWS_290  # same
+  - CKV_AWS_286  # same
+  - CKV_AWS_287  # same
+  - CKV_AWS_288  # same
+  - CKV_AWS_289  # same
+  - CKV_AWS_109  # same (permissions management in the deploy role is bounded by the permissions boundary)
+  - CKV_AWS_110  # same
+  - CKV_AWS_61   # IAM assume-role trust: the OIDC trust condition is StringLike on repo:owner/name:ref:refs/heads/main — false positive on federated trust
+  - CKV_AWS_60   # same
+  - CKV2_AWS_62  # S3 event notifications on the audit bucket: n/a
+  - CKV_AWS_107  # "credentials exposure" in the deploy boundary: a Terraform deploy role must read Secrets Manager/SSM values its stacks declare; iam:CreateUser/CreateAccessKey are explicitly DENIED in the same boundary, and the trust is limited to main-branch runs of named repos
+  - CKV_AWS_108  # "data exfiltration" in the deploy boundary: s3:* is needed for state/artifacts; the accounts hold demo data, and CloudTrail records every call this role makes
