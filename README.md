@@ -1,5 +1,7 @@
 # aws-landing-zone
 
+> **Sep 2026 (v2):** AWS provider 5 → **6**, Renovate + pre-commit + tflint. 11 policy tests still green; still deliberately not applied.
+>
 > **Sep 2026:** first release — Organizations + OU tree, five SCPs unit-tested against concrete requests, OIDC deploy roles with permissions boundaries, org CloudTrail; validated, deliberately not applied.
 
 A multi-account AWS foundation in Terraform — **Organizations, an OU tree, service control
