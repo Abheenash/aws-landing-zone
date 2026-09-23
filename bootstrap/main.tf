@@ -30,10 +30,55 @@ resource "aws_s3_bucket_versioning" "state" {
 # A KMS CMK rather than SSE-S3: state files contain resource attributes and
 # occasionally secrets, and a CMK means access can be revoked independently of
 # the bucket policy.
+# An explicit key policy. Without one, KMS applies a default that grants the
+# account root full control and nothing else — which works, but means the key's
+# permissions live entirely in IAM with no statement on the key itself saying
+# who may use it. Spelling it out is what makes "who can decrypt state?" a
+# question with an answer in this file.
+data "aws_iam_policy_document" "state_key" {
+  statement {
+    sid       = "EnableIAMUserPermissions"
+    actions   = ["kms:*"]
+    resources = ["*"]
+    principals {
+      type        = "AWS"
+      identifiers = ["arn:aws:iam::${data.aws_caller_identity.current.account_id}:root"]
+    }
+  }
+
+  statement {
+    sid    = "AllowS3ToUseTheKeyForThisBucketOnly"
+    effect = "Allow"
+    actions = [
+      "kms:Encrypt",
+      "kms:Decrypt",
+      "kms:ReEncrypt*",
+      "kms:GenerateDataKey*",
+      "kms:DescribeKey",
+    ]
+    resources = ["*"]
+    principals {
+      type        = "Service"
+      identifiers = ["s3.amazonaws.com"]
+    }
+    condition {
+      test     = "StringEquals"
+      variable = "kms:ViaService"
+      values   = ["s3.${var.region}.amazonaws.com"]
+    }
+    condition {
+      test     = "StringEquals"
+      variable = "kms:CallerAccount"
+      values   = [data.aws_caller_identity.current.account_id]
+    }
+  }
+}
+
 resource "aws_kms_key" "state" {
   description             = "Encrypts Terraform state in ${var.bucket_name}"
   enable_key_rotation     = true
   deletion_window_in_days = 30
+  policy                  = data.aws_iam_policy_document.state_key.json
 }
 
 resource "aws_kms_alias" "state" {

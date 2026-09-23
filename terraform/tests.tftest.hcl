@@ -1,3 +1,52 @@
+# The aliased providers assume OrganizationAccountAccessRole into each member
+# account. Without mocking them too, `terraform test` reaches for real AWS
+# credentials — which passed locally only because I have some configured, and
+# failed the moment CI ran it with none. A test that depends on the developer's
+# credentials is not a test.
+mock_provider "aws" {
+  alias = "security"
+}
+
+mock_provider "aws" {
+  alias = "dev"
+}
+
+mock_provider "aws" {
+  alias = "prod"
+}
+
+mock_provider "aws" {
+  alias = "sandbox"
+}
+
+# The account-baseline module builds IAM from policy documents a mocked provider
+# cannot satisfy. None of the assertions below touch it — they are about the org
+# trail and the audit bucket, both in the root module — so replacing it with its
+# outputs keeps the plan honest about what is actually being tested.
+override_module {
+  target = module.baseline_security
+  outputs = {
+    deploy_role_arn = "arn:aws:iam::111122223333:role/deploy"
+    account_id      = "111122223333"
+  }
+}
+
+override_module {
+  target = module.baseline_dev
+  outputs = {
+    deploy_role_arn = "arn:aws:iam::444455556666:role/deploy"
+    account_id      = "444455556666"
+  }
+}
+
+override_module {
+  target = module.baseline_prod
+  outputs = {
+    deploy_role_arn = "arn:aws:iam::777788889999:role/deploy"
+    account_id      = "777788889999"
+  }
+}
+
 variables {
   # The only required input. A test value, never a real domain.
   org_root_email_domain = "example.invalid"
