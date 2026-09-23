@@ -4,7 +4,6 @@ import os
 import subprocess
 
 import pytest
-
 from scp_eval import denied
 
 ROOT = os.path.join(os.path.dirname(__file__), "..", "terraform")
@@ -21,8 +20,14 @@ def load(name):
 
 def render(name, **vars):
     """Render a .tftpl the way Terraform will, using terraform console."""
-    expr = "templatefile(%s, %s)" % (json.dumps(os.path.join(POL, name)), json.dumps(vars))
-    out = subprocess.run(["terraform", "console"], input=expr, capture_output=True, text=True, cwd=ROOT, check=True).stdout
+    expr = f"templatefile({json.dumps(os.path.join(POL, name))}, {json.dumps(vars)})"
+    # `terraform` is resolved from PATH on purpose: CI installs it via
+    # setup-terraform and a developer has their own. Hardcoding a path would
+    # break both.
+    out = subprocess.run(
+        ["terraform", "console"],  # noqa: S607 — resolved from PATH on purpose
+        input=expr, capture_output=True, text=True, cwd=ROOT, check=True,
+    ).stdout
     # console prints multi-line strings as a heredoc: <<EOT ... EOT
     lines = out.strip().splitlines()
     if lines and lines[0].startswith("<<"):

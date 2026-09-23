@@ -6,7 +6,6 @@ operators the policies use: StringEquals, StringNotEquals, StringLike, ArnLike,
 ArnNotLike, Null, NumericGreaterThan, and the ForAnyValue: set prefix. SCPs are
 deny-only filters, so a request is "denied" if any Deny statement matches.
 """
-import fnmatch
 import json
 import re
 
@@ -57,12 +56,10 @@ def _cond_ok(operator, key, expected, ctx):
 
 
 def _matches(stmt, action, resource, ctx):
-    if "Action" in stmt:
-        if not any(_glob(a, action) for a in _as_list(stmt["Action"])):
-            return False
-    if "NotAction" in stmt:
-        if any(_glob(a, action) for a in _as_list(stmt["NotAction"])):
-            return False
+    if "Action" in stmt and not any(_glob(a, action) for a in _as_list(stmt["Action"])):
+        return False
+    if "NotAction" in stmt and any(_glob(a, action) for a in _as_list(stmt["NotAction"])):
+        return False
     if not any(_glob(r, resource) for r in _as_list(stmt.get("Resource", "*"))):
         return False
     for operator, entries in stmt.get("Condition", {}).items():
