@@ -24,6 +24,22 @@ place to enforce "nobody uses root" or "nothing runs in ap-south-1" that a workl
 Governance is a whole domain of the DevOps Professional exam that a single-account portfolio
 can't show. This repo is that domain, done the way I'd do it for a team.
 
+## State backend
+
+[`bootstrap/`](bootstrap/) creates the S3 bucket every other project stores its
+Terraform state in — versioned, CMK-encrypted, TLS-only, `prevent_destroy`, with
+noncurrent versions expiring at 90 days. It is applied once by hand and is the only
+Terraform here whose own state is local, because the thing that creates the backend
+cannot live in it.
+
+That the landing zone owns it is the point: shared foundational resources belong
+with governance, not duplicated into nine workload repos.
+
+This repo is the one that does **not** consume that backend — its SCP tests drive
+`terraform console`, which cannot run against an uninitialised backend and has no
+`-backend=false` escape hatch. Reasoning in
+[`terraform/REMOTE-STATE.md`](terraform/REMOTE-STATE.md).
+
 ## Layout
 
 ```
