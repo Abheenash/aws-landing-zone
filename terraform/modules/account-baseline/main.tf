@@ -3,8 +3,17 @@
 # deploy through the OIDC role created here.
 
 terraform {
+  # A child module declares which providers it needs AND the versions it works
+  # with. Leaving the constraint off looks harmless because the root module pins
+  # `~> 6.0` and the root wins — until this module is reused from somewhere that
+  # pins differently, at which point it silently accepts whatever it is handed.
+  # tflint's terraform_required_providers is right to flag it.
+  required_version = ">= 1.9"
   required_providers {
-    aws = { source = "hashicorp/aws" }
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 6.0"
+    }
   }
 }
 
