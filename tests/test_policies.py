@@ -1,10 +1,35 @@
 """Prove each SCP against concrete requests — what it blocks AND what it must not block."""
 import json
 import os
+import shutil
 import subprocess
 
 import pytest
 from scp_eval import denied
+
+# Five of these tests render a .tftpl through `terraform console`, so they need
+# the terraform binary. CI installs it with setup-terraform; a developer may not
+# have it. Without this guard those five ERROR with a bare FileNotFoundError,
+# which reads like the suite is broken rather than like a missing tool — and the
+# coverage number that comes out of such a run is meaningless.
+#
+# REQUIRE_TERRAFORM=1 turns the skip back into a failure, so CI cannot silently
+# stop exercising the rendered policies. Same pattern as the emulator-backed
+# suites in my other repos.
+_HAVE_TERRAFORM = shutil.which("terraform") is not None
+
+if os.environ.get("REQUIRE_TERRAFORM") == "1" and not _HAVE_TERRAFORM:
+    raise RuntimeError(
+        "REQUIRE_TERRAFORM=1 but the terraform binary is not on PATH. The template "
+        "rendering tests were meant to run, not to be skipped."
+    )
+
+def _require_terraform():
+    """Skip from inside the fixture. A pytest mark cannot be applied to a fixture,
+    so the guard lives here; every test that takes one of these fixtures inherits
+    the skip automatically."""
+    if not _HAVE_TERRAFORM:
+        pytest.skip("terraform is not on PATH — needed to render .tftpl via `terraform console`")
 
 ROOT = os.path.join(os.path.dirname(__file__), "..", "terraform")
 POL = os.path.join(ROOT, "policies")
@@ -38,11 +63,13 @@ def render(name, **vars):
 
 @pytest.fixture(scope="module")
 def region_lock():
+    _require_terraform()
     return render("region-lock.json.tftpl", home_regions=json.dumps(["us-east-1", "us-west-2"]), required_tags=[], org_id="o-x")
 
 
 @pytest.fixture(scope="module")
 def require_tags():
+    _require_terraform()
     return render("require-tags.json.tftpl", home_regions="[]", required_tags=["Project", "Owner"], org_id="o-x")
 
 
